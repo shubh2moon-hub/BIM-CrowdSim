@@ -546,13 +546,18 @@ class BIMSimulationModel(Model):
     def _get_all_agents(self) -> list:
         """Return all active agents, compatible with Mesa 2.x and 3.x."""
         sched = self.schedule
-        # Our shim and Mesa 2.x SimultaneousActivation store in ._agents dict
-        if hasattr(sched, '_agents'):
-            return list(sched._agents.values())
-        # Mesa 2.4 AgentSet via .agents property
+        # Mesa 2.4+ AgentSet via .agents property or our shim
         if hasattr(sched, 'agents'):
             try:
                 return list(sched.agents)
+            except Exception:
+                pass
+        # Older Mesa 2.x SimultaneousActivation stores in ._agents dict
+        if hasattr(sched, '_agents'):
+            if isinstance(sched._agents, dict):
+                return list(sched._agents.values())
+            try:
+                return list(sched._agents)
             except Exception:
                 pass
         # Last fallback: our own registry dict

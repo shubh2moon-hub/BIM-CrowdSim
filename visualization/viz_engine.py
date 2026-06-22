@@ -410,13 +410,18 @@ class Visualization3D(QObject):
         if hasattr(simulation, '_get_all_agents'):
             return simulation._get_all_agents()
         sched = simulation.schedule
-        # Mesa 2.x SimultaneousActivation stores in ._agents dict
-        if hasattr(sched, '_agents'):
-            return list(sched._agents.values())
         # Mesa 2.4 AgentSet via .agents property
         if hasattr(sched, 'agents'):
             try:
                 return list(sched.agents)
+            except Exception:
+                pass
+        # Mesa 2.x SimultaneousActivation stores in ._agents dict
+        if hasattr(sched, '_agents'):
+            if isinstance(sched._agents, dict):
+                return list(sched._agents.values())
+            try:
+                return list(sched._agents)
             except Exception:
                 pass
         # Last resort: our own registry dict
