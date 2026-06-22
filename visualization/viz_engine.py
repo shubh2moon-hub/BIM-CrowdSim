@@ -406,18 +406,23 @@ class Visualization3D(QObject):
     @staticmethod
     def _get_agents(simulation: 'BIMSimulationModel') -> list:
         """Return a list of agents compatible with Mesa 2.x and 3.x."""
+        # Prefer the model's own version-safe method
+        if hasattr(simulation, '_get_all_agents'):
+            return simulation._get_all_agents()
         sched = simulation.schedule
-        # Mesa 2.x: SimultaneousActivation stores agents in ._agents dict
+        # Mesa 2.x SimultaneousActivation stores in ._agents dict
         if hasattr(sched, '_agents'):
             return list(sched._agents.values())
-        # Mesa 2.x fallback via .agents property
+        # Mesa 2.4 AgentSet via .agents property
         if hasattr(sched, 'agents'):
             try:
                 return list(sched.agents)
             except Exception:
                 pass
-        # Last resort: read from model's own dict
-        return list(simulation.agents.values())
+        # Last resort: our own registry dict
+        if hasattr(simulation, '_agent_registry'):
+            return list(simulation._agent_registry.values())
+        return []
 
     def load_simulation(self, simulation: 'BIMSimulationModel'):
         """Load a simulation for visualization."""

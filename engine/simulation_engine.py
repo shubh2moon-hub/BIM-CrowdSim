@@ -13,9 +13,41 @@ from enum import Enum
 import numpy as np
 import mesa
 from mesa import Model, Agent
-from mesa.time import RandomActivation, SimultaneousActivation
-from mesa.space import ContinuousSpace, MultiGrid
 from mesa.datacollection import DataCollector
+
+# Mesa 2.x / 3.x scheduler compatibility
+try:
+    from mesa.time import SimultaneousActivation
+except ImportError:
+    # Mesa 3.x removed mesa.time — use a simple list-based scheduler shim
+    class SimultaneousActivation:
+        """Minimal drop-in for Mesa 3.x where mesa.time was removed."""
+        def __init__(self, model):
+            self.model = model
+            self._agents: dict = {}
+            self.steps = 0
+            self.time = 0
+
+        def add(self, agent):
+            self._agents[agent.unique_id] = agent
+
+        def remove(self, agent):
+            self._agents.pop(agent.unique_id, None)
+
+        @property
+        def agents(self):
+            return list(self._agents.values())
+
+        def step(self):
+            for agent in list(self._agents.values()):
+                agent.step()
+            self.steps += 1
+            self.time += 1
+
+try:
+    from mesa.space import ContinuousSpace
+except ImportError:
+    ContinuousSpace = None  # not critical — we skip placement if unavailable
 
 from core.bim_processor import BIMModel, BIMSpace, BIMElement, ElementCategory
 from core.spatial_engine import SpatialGraph, SpatialIntelligenceEngine
@@ -151,9 +183,13 @@ class BIMAgent(Agent):
         
     def step(self):
         """Execute one step of the agent."""
-        # Record state
+        # Record state — schedule.steps attr differs between Mesa versions
+        current_step = getattr(getattr(self, 'model', None), '_step_count', 0)
+        if hasattr(self.model, 'schedule') and hasattr(self.model.schedule, 'steps'):
+            current_step = self.model.schedule.steps
+
         self.state_history.append({
-            "step": self.model.schedule.steps,
+            "step": current_step,
             "state": self.state.value,
             "position": tuple(self.position),
             "speed": self.current_speed
@@ -424,8 +460,9 @@ class BIMSimulationModel(Model):
         # Schedule
         self.schedule = SimultaneousActivation(self)
         
-        # Agent tracking
-        self.agents: Dict[int, BIMAgent] = {}
+        # Agent tracking — use _agent_registry to avoid conflict with
+        # Mesa 2.4+ which reserves model.agents as an AgentSet
+        self._agent_registry: Dict[int, BIMAgent] = {}
         self.evacuated_agents = 0
         self.next_agent_id = 0
         
@@ -493,7 +530,7 @@ class BIMSimulationModel(Model):
                     agent.current_space = space.id
                     
         self.schedule.add(agent)
-        self.agents[agent_id] = agent
+        self._agent_registry[agent_id] = agent
         
         # Place on continuous space
         try:
@@ -503,6 +540,24 @@ class BIMSimulationModel(Model):
             
         return agent
         
+    # ------------------------------------------------------------------
+    # Mesa-version-safe agent iterator
+    # ------------------------------------------------------------------
+    def _get_all_agents(self) -> list:
+        """Return all active agents, compatible with Mesa 2.x and 3.x."""
+        sched = self.schedule
+        # Our shim and Mesa 2.x SimultaneousActivation store in ._agents dict
+        if hasattr(sched, '_agents'):
+            return list(sched._agents.values())
+        # Mesa 2.4 AgentSet via .agents property
+        if hasattr(sched, 'agents'):
+            try:
+                return list(sched.agents)
+            except Exception:
+                pass
+        # Last fallback: our own registry dict
+        return list(self._agent_registry.values())
+
     def step(self):
         """Execute one simulation step."""
         # Update time
@@ -572,7 +627,7 @@ class BIMSimulationModel(Model):
                 
     def _event_evacuate(self, event: Dict):
         """Trigger evacuation for all agents."""
-        for agent in self.schedule.agents:
+        for agent in self._get_all_agents():
             agent.state = AgentState.EVACUATING
             agent._set_evacuation_destination()
             
@@ -603,7 +658,7 @@ class BIMSimulationModel(Model):
         agent_filter = event.get("filter", {})
         destination = event.get("destination")
         
-        for agent in self.schedule.agents:
+        for agent in self._get_all_agents():
             match = True
             for key, value in agent_filter.items():
                 if getattr(agent.profile, key, None) != value:
@@ -616,7 +671,7 @@ class BIMSimulationModel(Model):
     def _update_density_map(self):
         """Update the density map of spaces."""
         self.density_map = {}
-        for agent in self.schedule.agents:
+        for agent in self._get_all_agents():
             if agent.current_space:
                 self.density_map[agent.current_space] = \
                     self.density_map.get(agent.current_space, 0) + 1
@@ -643,7 +698,7 @@ class BIMSimulationModel(Model):
         """Detect social interactions between agents."""
         interaction_distance = 2.0  # meters
         
-        agents_list = list(self.schedule.agents)
+        agents_list = self._get_all_agents()
         for i in range(len(agents_list)):
             for j in range(i + 1, len(agents_list)):
                 a1 = agents_list[i]
@@ -661,10 +716,10 @@ class BIMSimulationModel(Model):
                             
     def _collect_metrics(self) -> SimulationMetrics:
         """Collect simulation metrics for current step."""
-        agents = list(self.schedule.agents)
+        agents = self._get_all_agents()
         
         metrics = SimulationMetrics(
-            timestamp=self.schedule.steps,
+            timestamp=getattr(self.schedule, 'steps', int(self.current_time)),
             agent_count=len(agents),
             agents_moving=sum(1 for a in agents if a.state == AgentState.MOVING),
             agents_waiting=sum(1 for a in agents if a.state == AgentState.WAITING),
@@ -684,20 +739,20 @@ class BIMSimulationModel(Model):
         
     def _count_moving_agents(self) -> int:
         """Count agents that are currently moving."""
-        return sum(1 for a in self.schedule.agents if a.state == AgentState.MOVING)
+        return sum(1 for a in self._get_all_agents() if a.state == AgentState.MOVING)
         
     def _count_waiting_agents(self) -> int:
         """Count agents that are waiting."""
-        return sum(1 for a in self.schedule.agents if a.state == AgentState.WAITING)
+        return sum(1 for a in self._get_all_agents() if a.state == AgentState.WAITING)
         
     def _get_avg_speed(self) -> float:
         """Get average speed of all agents."""
-        agents = list(self.schedule.agents)
+        agents = self._get_all_agents()
         return sum(a.current_speed for a in agents) / len(agents) if agents else 0
         
     def get_agent_metrics(self) -> List[Dict]:
         """Get metrics for all agents."""
-        return [agent.get_metrics() for agent in self.schedule.agents]
+        return [agent.get_metrics() for agent in self._get_all_agents()]
         
     def get_space_occupancy(self) -> Dict[str, Dict]:
         """Get occupancy information for all spaces."""
