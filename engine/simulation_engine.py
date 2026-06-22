@@ -764,14 +764,16 @@ class BIMSimulationModel(Model):
         occupancy = {}
         for space_id, space in self.bim_model.spaces.items():
             agent_count = self.density_map.get(space_id, 0)
+            # BIMSpace doesn't have a capacity attribute by default, assume 2 sq m per person
+            capacity = getattr(space, 'capacity', max(1, space.area / 2.0))
             density = agent_count / space.area if space.area > 0 else 0
-            capacity_ratio = agent_count / space.capacity if space.capacity > 0 else 0
+            capacity_ratio = agent_count / capacity if capacity > 0 else 0
             
             occupancy[space_id] = {
                 "space_name": space.name,
                 "agent_count": agent_count,
                 "density": density,
-                "capacity": space.capacity,
+                "capacity": capacity,
                 "capacity_ratio": capacity_ratio,
                 "is_overcrowded": capacity_ratio > 1.0
             }
