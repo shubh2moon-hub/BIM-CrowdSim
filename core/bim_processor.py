@@ -82,6 +82,7 @@ class BIMSpace:
     volume: float
     bounds: Optional[Tuple] = None
     center: Optional[Tuple[float, float, float]] = None
+    geometry: Optional[Dict] = None
     category: str = "space"
     adjacent_spaces: List[str] = field(default_factory=list)
     connected_doors: List[str] = field(default_factory=list)
@@ -236,14 +237,14 @@ class BIMProcessor:
                                     volume = q.VolumeValue
 
             # Get bounds
-            bounds, center = self._get_element_bounds(space)
+            geometry, bounds, center = self._get_element_geometry_and_bounds(space)
 
             # Categorize space
             category = self._categorize_space(space)
 
             bim_space = BIMSpace(
                 id=str(space.id()),
-                global_id=getattr(space, "GlobalId", ""),
+                global_id=space.GlobalId,
                 name=space.Name or f"Space {space.id()}",
                 long_name=getattr(space, "LongName", "") or "",
                 level=level_id,
@@ -251,6 +252,7 @@ class BIMProcessor:
                 volume=float(volume) if volume else 0.0,
                 bounds=bounds,
                 center=center,
+                geometry=geometry,
                 category=category
             )
             spaces[str(space.id())] = bim_space
@@ -344,7 +346,7 @@ class BIMProcessor:
                 break
 
         # Get geometry
-        bounds, center = self._get_element_bounds(elem)
+        geometry, bounds, center = self._get_element_geometry_and_bounds(elem)
 
         # Get properties
         properties = self._get_element_properties(elem)
@@ -365,12 +367,13 @@ class BIMProcessor:
 
         element = BIMElement(
             id=str(elem.id()),
-            global_id=getattr(elem, "GlobalId", ""),
+            global_id=elem.GlobalId,
             name=elem.Name or f"{elem.is_a()} {elem.id()}",
             element_type=elem.is_a(),
             category=category,
             level=level_id,
             properties=properties,
+            geometry=geometry,
             bounds=bounds,
             center=center,
             area=float(area) if area else 0.0,
@@ -414,20 +417,25 @@ class BIMProcessor:
         else:
             return ElementCategory.UNKNOWN
 
-    def _get_element_bounds(self, elem) -> Tuple[Optional[Tuple], Optional[Tuple]]:
-        """Get bounding box and center of an element."""
+    def _get_element_geometry_and_bounds(self, elem) -> Tuple[Optional[Dict], Optional[Tuple], Optional[Tuple]]:
+        """Get full geometry, bounding box and center of an element."""
         try:
             shape = ifcopenshell.geom.create_shape(self.settings, elem)
             if shape:
                 verts = np.array(shape.geometry.verts).reshape(-1, 3)
+                faces = np.array(shape.geometry.faces)
                 if len(verts) > 0:
                     min_bounds = tuple(verts.min(axis=0))
                     max_bounds = tuple(verts.max(axis=0))
                     center = tuple((verts.min(axis=0) + verts.max(axis=0)) / 2)
-                    return (min_bounds, max_bounds), center
+                    pv_faces = []
+                    for i in range(0, len(faces), 3):
+                        pv_faces.extend([3, faces[i], faces[i+1], faces[i+2]])
+                    geometry = {"vertices": verts.tolist(), "faces": pv_faces}
+                    return geometry, (min_bounds, max_bounds), center
         except Exception:
             pass
-        return None, None
+        return None, None, None
 
     def _get_element_properties(self, elem) -> Dict[str, Any]:
         """Extract properties from an IFC element."""

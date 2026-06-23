@@ -44,15 +44,18 @@ class VisualizationSettings:
     show_labels: bool = False
     show_navigation: bool = False
     show_spatial_graph: bool = False
+    level_filter: Optional[str] = None
     
     # Agent visualization
     show_agents: bool = True
     agent_size: float = 0.3
     show_trails: bool = False
+    agent_trail_length: int = 50
     show_interactions: bool = False
     
     # Color settings
     wall_color: Tuple[float, float, float] = (0.85, 0.85, 0.85)
+    wall_opacity: float = 1.0
     floor_color: Tuple[float, float, float] = (0.7, 0.7, 0.7)
     door_color: Tuple[float, float, float] = (0.6, 0.4, 0.2)
     window_color: Tuple[float, float, float] = (0.5, 0.7, 0.9)
@@ -186,16 +189,18 @@ class Visualization3D(QObject):
         
         # Group elements by category
         for elem_id, elem in self.current_model.elements.items():
+            if self.settings.level_filter and elem.level != self.settings.level_filter:
+                continue
             if elem.category in category_groups:
                 category_groups[elem.category].append(elem)
                 
         # Display walls
-        if self.settings.show_walls and category_groups[ElementCategory.WALL]:
+        if self.settings.show_walls and ElementCategory.WALL in category_groups:
             self._display_element_category(
                 category_groups[ElementCategory.WALL],
                 "walls",
                 self.settings.wall_color,
-                opacity=0.9
+                opacity=self.settings.wall_opacity
             )
             
         # Display floors
@@ -259,12 +264,22 @@ class Visualization3D(QObject):
         vertex_offset = 0
         
         for elem in elements:
-            if elem.bounds:
+            if getattr(elem, 'geometry', None):
+                verts = elem.geometry["vertices"]
+                faces = elem.geometry["faces"]
+                
+                combined_points.extend(verts)
+                # Adjust face indices by vertex_offset
+                for i in range(0, len(faces), 4):
+                    combined_faces.extend([3, faces[i+1] + vertex_offset, faces[i+2] + vertex_offset, faces[i+3] + vertex_offset])
+                    
+                vertex_offset += len(verts)
+            elif elem.bounds:
                 # Create a simple box from bounds
                 (min_x, min_y, min_z), (max_x, max_y, max_z) = elem.bounds
                 
-                # Box vertices
-                vertices = [
+                # Create 8 vertices for the box
+                verts = [
                     [min_x, min_y, min_z],
                     [max_x, min_y, min_z],
                     [max_x, max_y, min_z],
@@ -275,25 +290,36 @@ class Visualization3D(QObject):
                     [min_x, max_y, max_z]
                 ]
                 
-                # Box faces (quads)
+                # Create 12 triangular faces
                 faces = [
-                    [0, 1, 2, 3],  # bottom
-                    [4, 5, 6, 7],  # top
-                    [0, 1, 5, 4],  # front
-                    [2, 3, 7, 6],  # back
-                    [1, 2, 6, 5],  # right
-                    [0, 3, 7, 4]   # left
+                    # Bottom
+                    3, 0 + vertex_offset, 1 + vertex_offset, 2 + vertex_offset,
+                    3, 0 + vertex_offset, 2 + vertex_offset, 3 + vertex_offset,
+                    # Top
+                    3, 4 + vertex_offset, 5 + vertex_offset, 6 + vertex_offset,
+                    3, 4 + vertex_offset, 6 + vertex_offset, 7 + vertex_offset,
+                    # Front
+                    3, 0 + vertex_offset, 1 + vertex_offset, 5 + vertex_offset,
+                    3, 0 + vertex_offset, 5 + vertex_offset, 4 + vertex_offset,
+                    # Back
+                    3, 2 + vertex_offset, 3 + vertex_offset, 7 + vertex_offset,
+                    3, 2 + vertex_offset, 7 + vertex_offset, 6 + vertex_offset,
+                    # Left
+                    3, 0 + vertex_offset, 3 + vertex_offset, 7 + vertex_offset,
+                    3, 0 + vertex_offset, 7 + vertex_offset, 4 + vertex_offset,
+                    # Right
+                    3, 1 + vertex_offset, 2 + vertex_offset, 6 + vertex_offset,
+                    3, 1 + vertex_offset, 6 + vertex_offset, 5 + vertex_offset
                 ]
                 
-                combined_points.extend(vertices)
-                for face in faces:
-                    combined_faces.append([4] + [v + vertex_offset for v in face])
+                combined_points.extend(verts)
+                combined_faces.extend(faces)
                 vertex_offset += 8
                     
         if combined_points:
             mesh = pv.PolyData(
                 np.array(combined_points),
-                np.hstack(combined_faces) if combined_faces else None
+                np.array(combined_faces) if combined_faces else None
             )
             
             actor = self.plotter.add_mesh(
@@ -307,10 +333,12 @@ class Visualization3D(QObject):
             
     def _display_spaces(self):
         """Display spaces as colored regions."""
-        if not self.current_model or not self.plotter:
+        if not self.current_model or not self.settings.show_spaces or not self.plotter:
             return
             
         for space_id, space in self.current_model.spaces.items():
+            if self.settings.level_filter and space.level != self.settings.level_filter:
+                continue
             if not space.center:
                 continue
                 

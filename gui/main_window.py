@@ -265,6 +265,30 @@ class MainWindow(QMainWindow):
         self.view_combo.currentTextChanged.connect(self._on_view_changed)
         main_toolbar.addWidget(self.view_combo)
         
+        main_toolbar.addSeparator()
+        
+        # Floor controls
+        floor_label = QLabel("Floor:")
+        main_toolbar.addWidget(floor_label)
+        
+        self.floor_combo = QComboBox()
+        self.floor_combo.addItem("All Floors", None)
+        self.floor_combo.currentIndexChanged.connect(self._on_floor_changed)
+        main_toolbar.addWidget(self.floor_combo)
+        
+        main_toolbar.addSeparator()
+        
+        # Wall Opacity controls
+        opacity_label = QLabel("Wall Opacity:")
+        main_toolbar.addWidget(opacity_label)
+        
+        self.opacity_slider = QSlider(Qt.Horizontal)
+        self.opacity_slider.setRange(0, 100)
+        self.opacity_slider.setValue(100)
+        self.opacity_slider.setMaximumWidth(100)
+        self.opacity_slider.valueChanged.connect(self._on_wall_opacity_changed)
+        main_toolbar.addWidget(self.opacity_slider)
+        
         # Simulation Toolbar
         sim_toolbar = QToolBar("Simulation", self)
         sim_toolbar.setMovable(True)
@@ -600,6 +624,31 @@ class MainWindow(QMainWindow):
         
     # Event Handlers
     
+    def _populate_floor_combo(self, model: BIMModel):
+        """Populate floor selector."""
+        self.floor_combo.blockSignals(True)
+        self.floor_combo.clear()
+        self.floor_combo.addItem("All Floors", None)
+        for level_id, level in sorted(model.levels.items(), key=lambda x: x[1].elevation):
+            self.floor_combo.addItem(level.name, level_id)
+        self.floor_combo.blockSignals(False)
+
+    def _on_floor_changed(self, index):
+        """Handle floor selection."""
+        if not self.current_model:
+            return
+        level_id = self.floor_combo.currentData()
+        self.visualization.settings.level_filter = level_id
+        if level_id:
+            self.visualization.set_view("top")
+            self.view_combo.setCurrentText("Top")
+        self.visualization.refresh()
+
+    def _on_wall_opacity_changed(self, value):
+        """Handle wall opacity slider change."""
+        self.visualization.settings.wall_opacity = value / 100.0
+        self.visualization.refresh()
+    
     def _on_open_ifc(self):
         """Handle open IFC file action."""
         file_path, _ = QFileDialog.getOpenFileName(
@@ -636,6 +685,7 @@ class MainWindow(QMainWindow):
             # Update UI
             self._update_project_tree(model)
             self._update_model_info(model)
+            self._populate_floor_combo(model)
             
             # Initialize 3D visualization
             self._initialize_3d_view(model)
