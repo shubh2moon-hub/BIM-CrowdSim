@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for BIM-Agent Studio
+Build script for BIM-CrowdSim
 Uses PyInstaller to create standalone executables.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 # Configuration
 # ---------------------------------------------------------------------------
 
-APP_NAME = "BIM-Agent-Studio"
+APP_NAME = "BIM-CrowdSim"
 APP_VERSION = "1.2.0"
 MAIN_SCRIPT = "app.py"
 ICON_PATH = os.path.join("assets", "icon.ico")
@@ -171,7 +171,7 @@ def build(mode: str = "onedir"):
         ``"onedir"`` (default, fast startup) or ``"onefile"`` (single exe).
     """
     print("=" * 60)
-    print(f"BIM-Agent Studio Build Script  (mode={mode})")
+    print(f"BIM-CrowdSim Build Script  (mode={mode})")
     print("=" * 60)
 
     project_dir = Path(__file__).parent
@@ -211,7 +211,7 @@ def build(mode: str = "onedir"):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Build BIM-Agent Studio")
+    parser = argparse.ArgumentParser(description="Build BIM-CrowdSim")
     parser.add_argument(
         "--mode",
         choices=["onefile", "onedir"],

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-BIM-Agent Studio - Basic Usage Example
+BIM-CrowdSim - Basic Usage Example
 
-This example demonstrates how to use the BIM-Agent Studio programmatically
+This example demonstrates how to use the BIM-CrowdSim programmatically
 without the GUI.
 """
 
@@ -25,7 +25,7 @@ def main():
     """Run a basic simulation example."""
     
     print("=" * 60)
-    print("BIM-Agent Studio - Basic Usage Example")
+    print("BIM-CrowdSim - Basic Usage Example")
     print("=" * 60)
     
     # Step 1: Load BIM Model

@@ -1,14 +1,14 @@
 ; ---------------------------------------------------------------------------
-; BIM-Agent Studio — Inno Setup Installer Script
+; BIM-CrowdSim — Inno Setup Installer Script
 ; ---------------------------------------------------------------------------
 ; Compile with:  ISCC.exe setup.iss
 ; ---------------------------------------------------------------------------
 
-#define MyAppName      "BIM-Agent Studio"
+#define MyAppName      "BIM-CrowdSim"
 #define MyAppVersion   "1.2.0"
-#define MyAppPublisher "BIM-Agent Studio Team"
-#define MyAppURL       "https://github.com/bim-agent-studio"
-#define MyAppExeName   "BIM-Agent-Studio.exe"
+#define MyAppPublisher "BIM-CrowdSim Team"
+#define MyAppURL       "https://github.com/bim-crowdsim"
+#define MyAppExeName   "BIM-CrowdSim.exe"
 
 [Setup]
 AppId={{A7F3B2C1-4D5E-6F78-9A0B-C1D2E3F4A5B6}
@@ -23,7 +23,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=..\LICENSE
 OutputDir=..\dist
-OutputBaseFilename=BIM-Agent-Studio-Setup-{#MyAppVersion}
+OutputBaseFilename=BIM-CrowdSim-Setup-{#MyAppVersion}
 SetupIconFile=..\assets\icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64
@@ -41,7 +41,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Bundle the entire onedir output folder
-Source: "..\dist\BIM-Agent-Studio\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\BIM-CrowdSim\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}";  Filename: "{app}\{#MyAppExeName}"

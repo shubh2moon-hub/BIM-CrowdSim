@@ -1,1 +1,1 @@
-# BIM-Agent Studio Visualization Package
+# BIM-CrowdSim Visualization Package

@@ -2,9 +2,9 @@
 
 ## BIM-native Agent-Based Modeling and Simulation Platform
 
-BIM-Agent Studio transforms BIM models (IFC files) into intelligent simulation environments where people, vehicles, services, resources, and environmental phenomena can interact within a digital representation of a building. The platform combines BIM data processing, spatial graph generation, agent-based simulation, and real-time 3D visualization in a single workflow.
+BIM-CrowdSim transforms BIM models (IFC files) into intelligent simulation environments where people, vehicles, services, resources, and environmental phenomena can interact within a digital representation of a building. The platform combines BIM data processing, spatial graph generation, agent-based simulation, and real-time 3D visualization in a single workflow.
 
-Unlike traditional BIM viewers that focus on geometry and documentation, BIM-Agent Studio focuses on behavior, movement, interaction, and performance within built environments.
+Unlike traditional BIM viewers that focus on geometry and documentation, BIM-CrowdSim focuses on behavior, movement, interaction, and performance within built environments.
 
 ## Features
 
@@ -132,7 +132,7 @@ python build.py --mode onedir
 ## Project Structure
 
 ```
-bim-agent-studio/
+bim-crowdsim/
 |-- app.py                  # Main entry point
 |-- build.py                # Build script
 |-- requirements.txt        # Python dependencies

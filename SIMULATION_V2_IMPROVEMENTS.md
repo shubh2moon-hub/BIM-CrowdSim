@@ -1,4 +1,4 @@
-# BIM-Agent Studio — Simulation Engine v2.0 Enhancement Summary
+# BIM-CrowdSim — Simulation Engine v2.0 Enhancement Summary
 
 ## Overview
 
@@ -22,7 +22,7 @@ The simulation logic has been significantly upgraded, taking heavy inspiration f
 
 Previously, agents simply moved toward waypoints with a basic repulsion vector. Now you can select from **five distinct microscopic models**, each suited to different research questions:
 
-### `basic` — Original BIM-Agent Studio Model
+### `basic` — Original BIM-CrowdSim Model
 - Simple velocity-steering toward the next waypoint.
 - Kept for backward compatibility.
 

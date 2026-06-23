@@ -1,4 +1,4 @@
-# BIM-Agent Studio Simulation Engine Package
+# BIM-CrowdSim Simulation Engine Package
 try:
     from .simulation_engine import (
         SimulationEngine, BIMSimulationModel, BIMAgent, AgentProfile,

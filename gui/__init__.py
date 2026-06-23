@@ -1,1 +1,1 @@
-# BIM-Agent Studio GUI Package
+# BIM-CrowdSim GUI Package

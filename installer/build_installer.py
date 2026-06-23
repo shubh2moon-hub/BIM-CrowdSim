@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Full build pipeline for BIM-Agent Studio.
+Full build pipeline for BIM-CrowdSim.
 
 Steps:
   1. Run PyInstaller (via build.py) to create the onedir bundle.
@@ -25,7 +25,7 @@ from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DIST_DIR = PROJECT_DIR / "dist"
-APP_NAME = "BIM-Agent-Studio"
+APP_NAME = "BIM-CrowdSim"
 ISS_FILE = PROJECT_DIR / "installer" / "setup.iss"
 
 # Common Inno Setup install locations
@@ -113,7 +113,7 @@ def compile_installer():
         sys.exit(1)
 
     # Find the output
-    setup_files = list(DIST_DIR.glob("BIM-Agent-Studio-Setup-*.exe"))
+    setup_files = list(DIST_DIR.glob("BIM-CrowdSim-Setup-*.exe"))
     if setup_files:
         setup_exe = setup_files[0]
         print(f"\n[OK] Installer created: {setup_exe}")
@@ -131,7 +131,7 @@ def compile_installer():
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Build BIM-Agent Studio installer")
+    parser = argparse.ArgumentParser(description="Build BIM-CrowdSim installer")
     parser.add_argument(
         "--skip-build",
         action="store_true",

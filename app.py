@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-BIM-Agent Studio - Main Application Entry Point
+BIM-CrowdSim - Main Application Entry Point
 BIM-native Agent-Based Modeling and Simulation Platform
 """
 
@@ -18,7 +18,7 @@ if str(project_dir) not in sys.path:
 def setup_logging(verbose: bool = False):
     """Configure application logging.
 
-    Writes the log file to %APPDATA%\\BIM-Agent Studio\\logs\\ so that the
+    Writes the log file to %APPDATA%\\BIM-CrowdSim\\logs\\ so that the
     application works correctly when installed under Program Files (which is
     read-only for normal users).
     """
@@ -27,7 +27,7 @@ def setup_logging(verbose: bool = False):
     # Use a user-writable directory for the log file so the app works
     # correctly when installed system-wide under Program Files.
     appdata = os.environ.get("APPDATA") or str(Path.home())
-    log_dir = Path(appdata) / "BIM-Agent Studio" / "logs"
+    log_dir = Path(appdata) / "BIM-CrowdSim" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "bim_agent_studio.log"
 
@@ -106,7 +106,7 @@ def check_dependencies():
 def main():
     """Main application entry point."""
     parser = argparse.ArgumentParser(
-        description='BIM-Agent Studio - BIM-native Agent-Based Modeling and Simulation Platform'
+        description='BIM-CrowdSim - BIM-native Agent-Based Modeling and Simulation Platform'
     )
     parser.add_argument(
         '--ifc', '-i',
@@ -131,7 +131,7 @@ def main():
     logger = logging.getLogger(__name__)
     
     logger.info("=" * 60)
-    logger.info("BIM-Agent Studio Starting")
+    logger.info("BIM-CrowdSim Starting")
     logger.info("=" * 60)
     
     # Check dependencies
@@ -153,9 +153,9 @@ def main():
     
     # Create application
     app = QApplication(sys.argv)
-    app.setApplicationName("BIM-Agent Studio")
+    app.setApplicationName("BIM-CrowdSim")
     app.setApplicationVersion("1.2.0")
-    app.setOrganizationName("BIM-Agent Studio")
+    app.setOrganizationName("BIM-CrowdSim")
     
     # Set application font
     font = QFont("Segoe UI", 9)

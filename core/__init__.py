@@ -1,1 +1,1 @@
-# BIM-Agent Studio Core Package
+# BIM-CrowdSim Core Package

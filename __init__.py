@@ -1,5 +1,5 @@
 """
-BIM-Agent Studio
+BIM-CrowdSim
 BIM-native Agent-Based Modeling and Simulation Platform
 
 A desktop application that transforms BIM models (IFC files) into intelligent
@@ -10,5 +10,5 @@ Version: 1.2.0
 """
 
 __version__ = "1.2.0"
-__author__ = "BIM-Agent Studio Team"
+__author__ = "BIM-CrowdSim Team"
 __license__ = "MIT"

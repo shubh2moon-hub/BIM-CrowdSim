@@ -481,7 +481,7 @@ class GeneralizedCentrifugalForceModel(PedestrianModel):
 # ---------------------------------------------------------------------------
 
 class BasicModel(PedestrianModel):
-    """The original simple model from BIM-Agent Studio."""
+    """The original simple model from BIM-CrowdSim."""
 
     def compute_velocity_change(
         self,
