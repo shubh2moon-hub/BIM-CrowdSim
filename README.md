@@ -1,4 +1,4 @@
-# BIM-INDOOR-ANALYSIS
+# BIM-CrowdSim
 
 ## BIM-native Agent-Based Modeling and Simulation Platform
 
